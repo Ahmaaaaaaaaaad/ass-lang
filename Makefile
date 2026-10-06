@@ -70,6 +70,9 @@ $(TARGET): $(OBJECTS)
 run: build
 	$(call RUN,$(TARGET)) $(ARGS)
 
+tests: build
+	$(call RUN,$(TARGET)) tests
+
 vars:
 	@echo Platform: $(PLATFORM) (host: $(HOST))
 	@echo Shell: $(SHELL) (cmd mode: $(if $(CMD_SHELL),yes,no))
