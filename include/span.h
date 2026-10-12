@@ -1,12 +1,12 @@
 #ifndef __SPAN_H__
 #define __SPAN_H__
 
-#include "spreadsheet/cell.h"
+#include <stdint.h>
 
 typedef struct
 {
-    cell_pos_t pos;
-    uint16_t offset, len;
+    uint32_t offset;
+    uint16_t len;
 } span_t;
 
 #endif

@@ -110,6 +110,7 @@ void program_read_source(program_t *program)
 void program_run(program_t *program)
 {
     program_read_source(program);
+    dprintln("running file '" slice_fmt "'", use(program->file_path));
 
     todo("lexical analyzer");
 

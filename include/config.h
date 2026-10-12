@@ -16,6 +16,7 @@ typedef struct
 {
     char const *file_ext;
     out_config_t out_conf;
+    bool debug;
 } config_t;
 
 extern config_t CONFIG;

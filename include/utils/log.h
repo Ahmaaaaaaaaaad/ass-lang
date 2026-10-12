@@ -13,4 +13,9 @@ void eprint(char const *fmt, ...);
 void veprintln(char const *fmt, va_list args);
 void eprintln(char const *fmt, ...);
 
+void vdprint(char const *fmt, va_list args);
+void dprint(char const *fmt, ...);
+void vdprintln(char const *fmt, va_list args);
+void dprintln(char const *fmt, ...);
+
 #endif

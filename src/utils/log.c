@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "config.h"
 #include "utils/log.h"
 
 #define base_print(f)                                                          \
@@ -32,3 +33,22 @@ void veprintln(char const *fmt, va_list args)
 }
 
 void eprintln(char const *fmt, ...) { base_print(veprintln) }
+
+void vdprint(char const *fmt, va_list args)
+{
+    if (!CONFIG.debug)
+        return;
+
+    fprintf(stderr, "[DEBUG] ");
+    vfprintf(stderr, fmt, args);
+}
+
+void dprint(char const *fmt, ...) { base_print(vdprint) }
+
+void vdprintln(char const *fmt, va_list args)
+{
+    vdprint(fmt, args);
+    fprintf(stderr, "\n");
+}
+
+void dprintln(char const *fmt, ...) { base_print(vdprintln) }
