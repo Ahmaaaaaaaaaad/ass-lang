@@ -1,6 +1,8 @@
 #ifndef __CORE_COLLECTION_VEC_H__
 #define __CORE_COLLECTION_VEC_H__
 
+#include <stdlib.h> // Library for the macros
+
 #include "core/collection/slice.h"
 #include "core/iter/iter.h"
 #include "utils/control.h"
@@ -69,9 +71,9 @@
 #define def_vec_push(T)                                                        \
     decl_vec_push(T)                                                           \
     {                                                                          \
+        vec->data[vec->len++] = el;                                            \
         if (vec->len >= vec->cap)                                              \
             vec_update_cap(T)(vec, vec->cap * 2);                              \
-        vec->data[vec->len++] = el;                                            \
     }
 
 #define vec_get(T) T##_vec_get

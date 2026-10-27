@@ -71,7 +71,8 @@ run: build
 	$(call RUN,$(TARGET)) $(ARGS)
 
 tests: build
-	$(call RUN,$(TARGET)) tests
+	ARGS="tests"
+	$(MAKE) run
 
 vars:
 	@echo Platform: $(PLATFORM) (host: $(HOST))

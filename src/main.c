@@ -1,10 +1,142 @@
+#include "automaton/state.h"
 #include "core/collection/hash_map.h"
 #include "core/collection/slice.h"
-#include "core/collection/vec.h"
 #include "program/program.h"
-#include "utils/control.h"
 #include "utils/drop.h"
 #include "utils/guard.h"
+
+#include <stdint.h>
+#include <string.h>
+
+// void insert_string_state_logic(state_t *root)
+// {
+//     //
+//     state_t *new = state_insert(root, '"', 0);
+//     for (size_t i = 1; i <= (size_t)(UINT8_MAX) + 1; ++i)
+//     {
+//         // println("new->tr_table: %p, c: %c", new->tr_table, (char)i);
+//         state_t *curr = state_insert(new, (char)i, 0);
+//         memcpy(curr->tr_table, new->tr_table, sizeof(state_t) *
+//         TR_TABLE_SIZE);
+
+//         if (curr->input == '"')
+//             curr->data = 69;
+//     }
+// }
+
+void init_str_lit_automaton(state_reg_t *reg, state_id_t root_id)
+{
+    // \" (Head)
+    state_id_t str_start_id = state_reg_register(reg, STF_NONE, 0);
+
+    // \" (Tail)
+    state_id_t str_end_id = state_reg_register(reg, STF_ACCEPTING, 67);
+    state_reg_insert(reg, str_start_id, '"', str_end_id);
+
+    // <char>+
+    state_id_t str_char_id = state_reg_register(reg, STF_NONE, 0);
+    state_t *str_char = state_reg_get_mut(reg, str_char_id);
+
+    vec_update_cap(state_id_t)(&str_char->tr, (size_t)UINT8_MAX + 1);
+    for (size_t i = 0; i <= UINT8_MAX; ++i)
+    {
+        if ((char)i != '\n')
+            state_insert(str_char, (uint8_t)i,
+                         (char)i == '"' ? str_end_id : str_char_id);
+    }
+
+    state_reg_insert(reg, root_id, '"', str_start_id);
+}
+
+void init_num_lit_automaton(state_reg_t *reg, state_id_t root_id)
+{
+    state_id_t digit_id = state_reg_register(reg, STF_ACCEPTING, 68);
+    state_t *digit = state_reg_get_mut(reg, digit_id);
+
+    vec_update_cap(state_id_t)(&digit->tr, (size_t)'9');
+    for (size_t i = '0'; i <= '9'; ++i)
+    {
+        state_reg_insert(reg, root_id, (uint8_t)i, digit_id);
+        state_insert(digit, (uint8_t)i, digit_id);
+    }
+}
+
+int main()
+{
+    // () -> \" -> <char>*
+    //        \        |
+    //         \------>\"
+
+    drop(state_reg_free) state_reg_t reg;
+    state_reg_init(&reg);
+
+    state_id_t root_id = state_reg_register(&reg, STF_ROOT, 0);
+
+    init_str_lit_automaton(&reg, root_id);
+    init_num_lit_automaton(&reg, root_id);
+
+    char const *samples[] = {"\"t", "\"test\"", "\"test\" ", "\"test\n\"",
+                             "1",   "12",       "012", "01b"};
+    for (size_t i = 0; i < (sizeof(samples) / sizeof(samples[0])); ++i)
+    {
+        state_id_t final_id =
+            state_word_step(&reg, root_id, as_slice(samples[i]));
+        state_t const *final = state_reg_get(&reg, final_id);
+        println("sample: %s, final_id: %zu, final->flag: %u, final->data: %u",
+                samples[i], final_id, final->flag, final->data);
+    }
+
+    return 0;
+}
+
+// int main() {
+// // if (argc < 2)
+// //     todo("display help information");
+
+// drop(state_free) state_t root;
+// state_init(&root);
+
+// for (size_t i = ____tok_kw_start + 1; i < ____tok_kw_end; ++i)
+// {
+//     state_multi_insert(&root,
+//                        as_slice(token_kind_str_repr((token_kind_t)i)),
+//                        i);
+// }
+
+// state_print(&root, 0);
+
+// uint8_t data = state_get(&root, as_slice("el"));
+// if (data != 0)
+// {
+//     token_kind_t kind = data;
+//     println("kind: %s", token_kind_str_repr(kind));
+// }
+
+// string_slice_t command = as_slice(argv[1]);
+
+// drop(vec_free(string_slice_t)) vec(string_slice_t) arguments;
+// vec_new(string_slice_t)(&arguments, NULL, (size_t)argc);
+// for (size_t i = 2; i < (size_t)argc; ++i)
+//     *vec_expand(string_slice_t)(&arguments) =
+//         (string_slice_t){.data = argv[i], .n = strlen(argv[i])};
+
+// drop(cmd_manager_free) cmd_manager_t cmdm;
+// cmd_manager_new(&cmdm);
+
+// init_cmds(&cmdm);
+
+// cmd_t const *cmd = hm_get(string_slice_t, cmd_t)(&cmdm.cmds, &command);
+// if (cmd == NULL)
+//     todo("throw error: unknown command '" slice_fmt "'.", use(command));
+
+// cmd->handler(cmd, view(string_slice_t)(&arguments, 0, arguments.len));
+
+// }
+
+typedef struct
+{
+    string_slice_t name, sh;
+} cmd_opt_t;
 
 typedef struct cmd_t
 {
@@ -42,85 +174,6 @@ void run_cmd_handler(cmd_t const *cmd, slice(string_slice_t) arguments)
     program_run(&program);
 }
 
-// vector_t files_from(const char *dirpath)
-// {
-//     vector_t path_vec = str_vec_with_cap(8);
-
-// #ifdef _WIN32
-//     WIN32_FIND_DATA ff_data;
-//     char spath[MAX_PATH];
-
-//     snprintf(spath, MAX_PATH, "%s\\*", dirpath);
-
-//     HANDLE h_find = FindFirstFile(spath, &ff_data);
-//     if (h_find == INVALID_HANDLE_VALUE)
-//         terminate("[files_from] failed to open directory", EXIT_FAILURE);
-
-//     do
-//     {
-//         if (strcmp(ff_data.cFileName, ".") == 0 ||
-//             strcmp(ff_data.cFileName, "..") == 0)
-//             continue;
-
-//         char cpath[PATH_MAX];
-//         snprintf(cpath, PATH_MAX, "%s\\%s", dirpath, ff_data.cFileName);
-
-//         struct stat buf;
-//         int status = stat(cpath, &buf);
-
-//         if (S_ISDIR(buf.st_mode))
-//         {
-//             clean(vec_free) vector_t files = files_from(cpath);
-//             vec_insert_full_vec(&path_vec, &files, path_vec.size, true);
-
-//             continue;
-//         }
-
-//         *str_vec_use(&path_vec) = string_from(cpath);
-
-//     } while (FindNextFile(h_find, &ff_data) != 0);
-
-//     FindClose(h_find);
-
-// #else
-//     DIR *dir;
-//     struct dirent *entry;
-
-//     dir = opendir(dirpath);
-//     if (dir == NULL)
-//         terminate("[files_from] failed to open directory", EXIT_FAILURE);
-
-//     while ((entry = readdir(dir)) != NULL)
-//     {
-//         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") ==
-//         0)
-//             continue;
-
-//         char cpath[PATH_MAX];
-//         snprintf(cpath, PATH_MAX, "%s/%s", dirpath, entry->d_name);
-
-//         struct stat buf;
-//         int status = stat(cpath, &buf);
-
-//         if (S_ISDIR(buf.st_mode))
-//         {
-//             // Does not require automatic clean-up as the full vector is
-//             moved clean(vec_free) vector_t files = files_from(cpath);
-//             vec_insert_full_vec(&path_vec, &files, path_vec.size, true);
-
-//             continue;
-//         }
-
-//         *str_vec_use(&path_vec) = string_from(cpath);
-//     }
-
-//     closedir(dir);
-
-// #endif
-
-//     return path_vec;
-// }
-
 void tests_cmd_handler(cmd_t const *cmd, slice(string_slice_t) arguments)
 {
     (void)cmd, (void)arguments;
@@ -148,46 +201,3 @@ void init_cmds(cmd_manager_t *cmdm)
                                          (cmd_t){name, cmd.handler});
     }
 }
-
-int main(int argc, char **argv)
-{
-    if (argc < 2)
-        todo("display help information");
-
-    string_slice_t command = as_slice(argv[1]);
-
-    drop(vec_free(string_slice_t)) vec(string_slice_t) arguments;
-    vec_new(string_slice_t)(&arguments, NULL, (size_t)argc);
-    for (size_t i = 2; i < (size_t)argc; ++i)
-    {
-        *vec_expand(string_slice_t)(&arguments) =
-            (string_slice_t){.data = argv[i], .n = strlen(argv[i])};
-    }
-
-    drop(cmd_manager_free) cmd_manager_t cmdm;
-    cmd_manager_new(&cmdm);
-    init_cmds(&cmdm);
-
-    cmd_t const *cmd = hm_get(string_slice_t, cmd_t)(&cmdm.cmds, &command);
-    if (cmd == NULL)
-        todo("throw error: unknown command '" slice_fmt "'.", use(command));
-
-    cmd->handler(cmd, view(string_slice_t)(&arguments, 0, arguments.len));
-
-    return 0;
-}
-
-// int main(int argc, char **argv)
-// {
-//     for (size_t i = 1; i < (size_t)argc; ++i)
-//         println("arg[%zu]: %s", i, argv[i]);
-
-//     char const *fpath = "tests/lexical/keywords.ass";
-
-//     drop(program_free) program_t program;
-//     program_new(&program, fpath);
-
-//     program_run(&program);
-
-//     return 0;
-// }
