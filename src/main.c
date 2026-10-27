@@ -1,6 +1,7 @@
 #include "automaton/state.h"
 #include "core/collection/hash_map.h"
 #include "core/collection/slice.h"
+#include "lexical/token.h"
 #include "program/program.h"
 #include "utils/drop.h"
 #include "utils/guard.h"
@@ -30,7 +31,7 @@ void init_str_lit_automaton(state_reg_t *reg, state_id_t root_id)
     state_id_t str_start_id = state_reg_register(reg, STF_NONE, 0);
 
     // \" (Tail)
-    state_id_t str_end_id = state_reg_register(reg, STF_ACCEPTING, 67);
+    state_id_t str_end_id = state_reg_register(reg, STF_ACCEPTING, TOK_STR);
     state_reg_insert(reg, str_start_id, '"', str_end_id);
 
     // <char>+
@@ -50,7 +51,8 @@ void init_str_lit_automaton(state_reg_t *reg, state_id_t root_id)
 
 void init_num_lit_automaton(state_reg_t *reg, state_id_t root_id)
 {
-    state_id_t digit_id = state_reg_register(reg, STF_ACCEPTING, 68);
+    // <digit>+
+    state_id_t digit_id = state_reg_register(reg, STF_ACCEPTING, TOK_INT);
     state_t *digit = state_reg_get_mut(reg, digit_id);
 
     vec_update_cap(state_id_t)(&digit->tr, (size_t)'9');
@@ -58,6 +60,22 @@ void init_num_lit_automaton(state_reg_t *reg, state_id_t root_id)
     {
         state_reg_insert(reg, root_id, (uint8_t)i, digit_id);
         state_insert(digit, (uint8_t)i, digit_id);
+    }
+
+    // \.
+    state_id_t frac_sep_id = state_reg_register(reg, STF_NONE, 0);
+    state_insert(digit, '.', frac_sep_id);
+
+    // <frac_digit>+
+    state_id_t frac_digit_id =
+        state_reg_register(reg, STF_ACCEPTING, TOK_FLOAT);
+    state_t *frac_digit = state_reg_get_mut(reg, frac_digit_id);
+
+    vec_update_cap(state_id_t)(&frac_digit->tr, (size_t)'9');
+    for (size_t i = '0'; i <= '9'; ++i)
+    {
+        state_reg_insert(reg, frac_sep_id, (uint8_t)i, frac_digit_id);
+        state_insert(frac_digit, (uint8_t)i, frac_digit_id);
     }
 }
 
@@ -76,7 +94,8 @@ int main()
     init_num_lit_automaton(&reg, root_id);
 
     char const *samples[] = {"\"t", "\"test\"", "\"test\" ", "\"test\n\"",
-                             "1",   "12",       "012", "01b"};
+                             "1",   "12",       "012",       "01b",
+                             "01.", "0.12",     "0.12.1"};
     for (size_t i = 0; i < (sizeof(samples) / sizeof(samples[0])); ++i)
     {
         state_id_t final_id =

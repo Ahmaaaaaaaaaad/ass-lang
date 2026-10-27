@@ -8,6 +8,7 @@
 typedef enum : uint8_t
 {
     TOK_IDENT,
+    TOK_STR,
     TOK_CHAR,
     TOK_INT,
     TOK_FLOAT,
