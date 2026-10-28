@@ -4,7 +4,7 @@ define_vec(token_t);
 
 char const *TOKEN_KIND_STRS[____tok_count] = {
     [TOK_PLUS] = "+",       [TOK_MINUS] = "-",      [TOK_STAR] = "*",
-    [TOK_SLASH] = "/",      [TOK_PERCENT] = "%",
+    [TOK_SLASH] = "/",      [TOK_PERCENT] = "%",    [TOK_SLASH_SLASH] = "//",
 
     [TOK_KW_IF] = "if",     [TOK_KW_ELSE] = "else", [TOK_KW_WHILE] = "while",
     [TOK_KW_AND] = "and",   [TOK_KW_OR] = "or",     [TOK_KW_NOT] = "not",
@@ -28,6 +28,7 @@ char const *TOKEN_KIND_NAMES[____tok_count] = {
     [TOK_STAR] = "STAR",
     [TOK_SLASH] = "SLASH",
     [TOK_PERCENT] = "PERCENT",
+    [TOK_SLASH_SLASH] = "SLASH_SLASH",
 
     [TOK_KW_IF] = "KW_IF",
     [TOK_KW_ELSE] = "KW_ELSE",
