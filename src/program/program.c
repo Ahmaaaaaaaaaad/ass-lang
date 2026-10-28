@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
+#include "automaton/state.h"
 #include "config.h"
 #include "core/string/slice.h"
 #include "core/string/string.h"
@@ -94,15 +96,25 @@ void program_read_source(program_t *program)
     if (fsize != read_size)
         panic("failed to completely read file: %s", program->file_path.data);
 
+    program->src.len = read_size;
+
     fclose(file);
 }
 
 void program_run(program_t *program)
 {
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
     program_read_source(program);
     dprintln("running file '%s'", program->file_path.data);
 
-    // drop(lexer_free) lexer_t lexer;
-    // lexer_new(&lexer, view(char)(&program->src, 0, program->src.len));
-    // lexer_analyze(&lexer);
+    drop(lexer_free) lexer_t lexer;
+    lexer_new(&lexer, view(char)(&program->src, 0, program->src.len));
+    lexer_analyze(&lexer);
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    long elapsed_ns = (end.tv_nsec - start.tv_nsec),
+         elapsed_mus = elapsed_ns / 1000;
+    dprintln("time elapsed: %ld ns, %ld μs", elapsed_ns, elapsed_mus);
 }

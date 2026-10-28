@@ -1,6 +1,7 @@
 #include "automaton/state.h"
 #include "core/collection/hash_map.h"
 #include "core/collection/slice.h"
+#include "lexical/analyzer.h"
 #include "lexical/token.h"
 #include "program/program.h"
 #include "utils/drop.h"
@@ -79,12 +80,8 @@ void init_num_lit_automaton(state_reg_t *reg, state_id_t root_id)
     }
 }
 
-int main()
+void stm_test()
 {
-    // () -> \" -> <char>*
-    //        \        |
-    //         \------>\"
-
     drop(state_reg_free) state_reg_t reg;
     state_reg_init(&reg);
 
@@ -93,7 +90,7 @@ int main()
     init_str_lit_automaton(&reg, root_id);
     init_num_lit_automaton(&reg, root_id);
 
-    char const *samples[] = {"\"t", "\"test\"", "\"test\" ", "\"test\n\"",
+    char const *samples[] = {"\"t", "\"test\"", "\"test123 esots 123 \" ", "\"test\n\"",
                              "1",   "12",       "012",       "01b",
                              "01.", "0.12",     "0.12.1"};
     for (size_t i = 0; i < (sizeof(samples) / sizeof(samples[0])); ++i)
@@ -104,6 +101,16 @@ int main()
         println("sample: %s, final_id: %zu, final->flag: %u, final->data: %u",
                 samples[i], final_id, final->flag, final->data);
     }
+}
+
+int main()
+{
+    char const *file_path = "tests/src/sample.ass";
+
+    drop(program_free) program_t program;
+    program_new(&program, file_path);
+
+    program_run(&program);
 
     return 0;
 }

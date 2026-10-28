@@ -1,7 +1,6 @@
 #ifndef __PROGRAM_PROGRAM_H__
 #define __PROGRAM_PROGRAM_H__
 
-#include "core/string/slice.h"
 #include "core/string/string.h"
 
 typedef struct

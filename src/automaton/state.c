@@ -2,6 +2,8 @@
 
 #include "automaton/state.h"
 #include "core/string/slice.h"
+#include "lexical/token.h"
+#include "utils/guard.h"
 
 define_vec(state_id_t);
 define_vec(state_t);
@@ -109,13 +111,22 @@ void state_free(state_t *state) { vec_free(state_id_t)(&state->tr); }
 
 void state_insert(state_t *state, uint8_t input, state_id_t state_id)
 {
+    size_t initial = state->tr.cap;
     vec_update_cap(state_id_t)(&state->tr, (size_t)input + 1);
-    *(state->tr.data + (size_t)input) = state_id;
+
+    // Capacity increased
+    if (initial < state->tr.cap)
+    {
+        for (size_t i = initial; i < state->tr.cap; i++)
+            state->tr.data[i] = SIZE_MAX;
+    }
+
+    state->tr.data[(size_t)input] = state_id;
 }
 
 state_id_t state_step(state_t const *state, uint8_t input)
 {
-    return state->tr.data[(size_t)input];
+    return input >= state->tr.cap ? SIZE_MAX : state->tr.data[(size_t)input];
 }
 
 state_id_t state_word_step(state_reg_t *reg, state_id_t root_id,

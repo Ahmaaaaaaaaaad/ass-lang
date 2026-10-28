@@ -75,8 +75,6 @@ void state_init(state_t *state);
 void state_free(state_t *state);
 
 void state_insert(state_t *state, uint8_t input, state_id_t state_id);
-void state_insert_on_id(state_reg_t *reg, state_id_t id, uint8_t input,
-                        state_id_t dest_id);
 
 state_id_t state_step(state_t const *state, uint8_t input);
 state_id_t state_word_step(state_reg_t *reg, state_id_t root_id,
