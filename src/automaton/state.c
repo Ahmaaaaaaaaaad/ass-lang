@@ -1,17 +1,12 @@
-#include <ctype.h>
 #include <stdlib.h>
 
 #include "automaton/state.h"
 #include "core/string/slice.h"
-#include "lexical/token.h"
-#include "utils/control.h"
-#include "utils/guard.h"
-#include "utils/log.h"
 
 define_vec(state_id_t);
 define_vec(state_t);
 
-#define PACKED
+// #define PACKED
 
 size_t const LOWER_ALPHA_OFS = 0, UPPER_ALPHA_OFS = ('z' - 'a') + 1,
              NUM_OFS = UPPER_ALPHA_OFS + (('Z' - 'A') + 1),
@@ -27,6 +22,24 @@ size_t const TR_TABLE_SIZE =
     ;
 
 #ifdef PACKED
+size_t char_idx_of(char c)
+{
+    if (isalnum(c))
+    {
+        return isalpha(c) ? islower(c) ? LOWER_ALPHA_OFS + (c - 'a')
+                                       : UPPER_ALPHA_OFS + (c - 'A')
+                          : NUM_OFS + (c - '0');
+    }
+
+    if (c != '_')
+        panic("invalid character");
+
+    return SYM_OFS;
+}
+#else
+size_t char_idx_of(char c) { return (size_t)c; }
+#endif
+#undef PACKED
 
 void state_reg_init(state_reg_t *reg)
 {
@@ -85,25 +98,6 @@ state_t const *state_step_from_id(state_reg_t *reg, state_id_t id,
 
     return state_reg_get(reg, next_id);
 }
-
-size_t char_idx_of(char c)
-{
-    if (isalnum(c))
-    {
-        return isalpha(c) ? islower(c) ? LOWER_ALPHA_OFS + (c - 'a')
-                                       : UPPER_ALPHA_OFS + (c - 'A')
-                          : NUM_OFS + (c - '0');
-    }
-
-    if (c != '_')
-        panic("invalid character");
-
-    return SYM_OFS;
-}
-#else
-size_t char_idx_of(char c) { return (size_t)c; }
-#endif
-#undef PACKED
 
 void state_init(state_t *state)
 {
