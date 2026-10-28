@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "core/collection/vec.h"
 #include "core/string/slice.h"
 
 typedef enum : uint8_t
@@ -50,16 +51,31 @@ typedef enum : uint8_t
     TOK_LBRACKET, // [
     TOK_RBRACKET, // ]
 
+    // Special
+    TOK_WHITESPACE, // Skipped by the lexer, never emitted
+    TOK_UNKNOWN,    // Lexical error
+
+    ____tok_count,
 } token_kind_t;
 
-extern char const *TOKEN_KIND_STRS[];
+#define is_keyword(kind) ((kind) > ____tok_kw_start && (kind) < ____tok_kw_end)
 
+extern char const *TOKEN_KIND_STRS[];
+extern char const *TOKEN_KIND_NAMES[];
+
+/// Source spelling of keywords, operators and delimiters (e.g. `"if"`, `"+"`),
+/// or `""` for token kinds without a fixed spelling.
 char const *token_kind_str_repr(token_kind_t kind);
+/// Display name of a token kind (e.g. `"KW_IF"`, `"PLUS"`).
+char const *token_kind_name(token_kind_t kind);
 
 typedef struct
 {
     string_slice_t lexeme;
     token_kind_t kind;
+    uint32_t line, col;
 } token_t;
+
+declare_vec(token_t);
 
 #endif

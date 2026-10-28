@@ -13,6 +13,7 @@ void program_new(program_t *program, char const *fpath);
 void program_free(program_t *program);
 
 void program_read_source(program_t *program);
-void program_run(program_t *program);
+/// Returns `false` if the program had errors.
+bool program_run(program_t *program);
 
 #endif
