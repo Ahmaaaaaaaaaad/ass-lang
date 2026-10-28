@@ -1,6 +1,8 @@
 #ifndef __UTILS_GUARD_H__
 #define __UTILS_GUARD_H__
 
+#include "utils/control.h"
+
 #define assert(expr, msg_fmt, ...)                                             \
     {                                                                          \
         if (!(expr))                                                           \

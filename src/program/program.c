@@ -4,8 +4,11 @@
 
 #include "config.h"
 #include "core/string/slice.h"
+#include "core/string/string.h"
+#include "lexical/analyzer.h"
 #include "program/program.h"
 #include "utils/control.h"
+#include "utils/drop.h"
 #include "utils/guard.h"
 
 #ifdef _WIN32
@@ -28,51 +31,39 @@ static bool is_regular_file(const char *path)
     return S_ISREG(buf.st_mode);
 }
 
-static char *canonicalize_path(const char *path)
+static void canonicalize_path(string_t *abs_path, const char *path)
 {
-    char *resolved = NULL;
-
 #ifdef _WIN32
     DWORD size = GetFullPathNameA(path, 0, NULL, NULL);
     if (size == 0)
         return NULL;
 
-    resolved = malloc(size * sizeof(char));
-    if (resolved == NULL)
-        return NULL;
-
+    vec_update_cap(char)(abs_path, size);
     if (GetFullPathNameA(path, size, resolved, NULL) == 0)
-    {
-        free(resolved);
-        return NULL;
-    }
+        todo("panic: cannot find absolute path of '%s'", path);
 
     for (char *p = resolved; *p; p++)
         if (*p == '\\')
             *p = '/';
 
 #else
-    resolved = malloc(PATH_MAX * sizeof(char));
-    if (resolved == NULL)
-        return NULL;
-
-    if (realpath(path, resolved) == NULL)
-    {
-        free(resolved);
-        return NULL;
-    }
+    vec_update_cap(char)(abs_path, PATH_MAX);
+    if (realpath(path, abs_path->data) == NULL)
+        todo("panic: cannot find absolute path of '%s'", path);
 
 #endif
-
-    return resolved;
 }
 
 void program_new(program_t *program, char const *fpath)
 {
-    program->file_path = as_slice(fpath);
+    string_from(&program->file_path, fpath);
 }
 
-void program_free(program_t *program) { string_free(&program->src); }
+void program_free(program_t *program)
+{
+    string_free(&program->src);
+    string_free(&program->file_path);
+}
 
 void program_read_source(program_t *program)
 {
@@ -80,18 +71,18 @@ void program_read_source(program_t *program)
         panic("invalid file path provided");
 
     size_t fext_len = strlen(CONFIG.file_ext);
-    if (program->file_path.n >= fext_len &&
-        string_slice_ends_with(&program->file_path, CONFIG.file_ext))
+    if (program->file_path.len >= fext_len &&
+        string_ends_with(&program->file_path, CONFIG.file_ext))
     {
         panic("entry point file provided must be an ASS-lang file and ends "
               "with `.ass`");
     }
 
-    program->file_path = as_slice(canonicalize_path(program->file_path.data));
+    canonicalize_path(&program->file_path, program->file_path.data);
 
     FILE *file = fopen(program->file_path.data, "r");
     if (file == NULL)
-        panic("failed to read file: " slice_fmt, use(program->file_path));
+        panic("failed to read file: %s", program->file_path.data);
 
     fseek(file, 0, SEEK_END);
     size_t fsize = ftell(file);
@@ -101,8 +92,7 @@ void program_read_source(program_t *program)
     size_t read_size = fread(program->src.data, sizeof(char), fsize, file);
 
     if (fsize != read_size)
-        panic("failed to completely read file: " slice_fmt,
-              use(program->file_path));
+        panic("failed to completely read file: %s", program->file_path.data);
 
     fclose(file);
 }
@@ -110,9 +100,9 @@ void program_read_source(program_t *program)
 void program_run(program_t *program)
 {
     program_read_source(program);
-    dprintln("running file '" slice_fmt "'", use(program->file_path));
+    dprintln("running file '%s'", program->file_path.data);
 
-    todo("lexical analyzer");
-
-    todo("syntax analyzer");
+    // drop(lexer_free) lexer_t lexer;
+    // lexer_new(&lexer, view(char)(&program->src, 0, program->src.len));
+    // lexer_analyze(&lexer);
 }

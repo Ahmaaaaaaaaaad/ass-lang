@@ -6,8 +6,7 @@
 
 typedef struct
 {
-    string_t src;
-    string_slice_t file_path;
+    string_t src, file_path;
 } program_t;
 
 void program_new(program_t *program, char const *fpath);
