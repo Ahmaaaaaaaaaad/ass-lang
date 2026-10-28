@@ -22,7 +22,7 @@
                                                                                \
         hm->cap = 8, hm->len = 0;                                              \
                                                                                \
-        hm_entry(K, V) **temp = calloc(sizeof(hm_entry(K, V)), 8);             \
+        hm_entry(K, V) **temp = calloc(8, sizeof(hm_entry(K, V) *));           \
         if (temp == NULL)                                                      \
             panic("failed to allocate hash map buffer");                       \
                                                                                \
@@ -79,7 +79,7 @@
         size_t init_cap = hm->cap;                                             \
         hm->cap *= 2;                                                          \
                                                                                \
-        hm_entry(K, V) **temp = calloc(sizeof(hm_entry(K, V)), hm->cap);       \
+        hm_entry(K, V) **temp = calloc(hm->cap, sizeof(hm_entry(K, V) *));     \
         if (temp == NULL)                                                      \
             panic("failed to allocate hash map entry buffer");                 \
                                                                                \

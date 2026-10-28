@@ -109,19 +109,21 @@ void string_replace_all(string_t *str, char const *old, char const *new)
 
 bool string_starts_with(string_t *str, char const *pref)
 {
-    return strncmp(str->data, pref, strlen(pref)) != 0;
+    size_t pref_len = strlen(pref);
+    return str->len >= pref_len && strncmp(str->data, pref, pref_len) == 0;
 }
 
 bool string_ends_with(string_t *str, char const *suf)
 {
     size_t suf_len = strlen(suf);
-    return strncmp(str->data + (str->len - suf_len), suf, suf_len) != 0;
+    return str->len >= suf_len &&
+           strncmp(str->data + (str->len - suf_len), suf, suf_len) == 0;
 }
 
 void string_assign(string_t *str, char const *s)
 {
     size_t n = strlen(s);
-    while (n > str->cap)
+    while (n + 1 > str->cap)
         vec_update_cap(char)(str, str->cap ? str->cap * 2 : 1);
 
     memcpy(str->data, s, n + 1);

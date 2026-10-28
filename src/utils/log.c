@@ -29,7 +29,7 @@ void eprint(char const *fmt, ...) { base_print(veprint) }
 void veprintln(char const *fmt, va_list args)
 {
     veprint(fmt, args);
-    fprintf(stdout, "\n");
+    fprintf(stderr, "\n");
 }
 
 void eprintln(char const *fmt, ...) { base_print(veprintln) }

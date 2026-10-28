@@ -82,13 +82,15 @@ void string_slice_trim(string_slice_t *slice)
 
 bool string_slice_starts_with(string_slice_t *str, char const *pref)
 {
-    return strncmp(str->data, pref, strlen(pref)) != 0;
+    size_t pref_len = strlen(pref);
+    return str->n >= pref_len && strncmp(str->data, pref, pref_len) == 0;
 }
 
 bool string_slice_ends_with(string_slice_t *str, char const *suf)
 {
     size_t suf_len = strlen(suf);
-    return strncmp(str->data + (str->n - suf_len), suf, suf_len) != 0;
+    return str->n >= suf_len &&
+           strncmp(str->data + (str->n - suf_len), suf, suf_len) == 0;
 }
 
 hasher_decl(string_slice_t)
